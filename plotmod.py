@@ -475,7 +475,7 @@ def plot_errbars_from_sigma_sample_marginals(ls, sigmas, burnin=0, spec=0, lmax=
     plt.scatter(ls, res[:, 0], color=color, label=label)
     plt.errorbar(ls, res[:, 0], res[:, 1:].T, ecolor=color, fmt=None)
 
-def plot_ml_powspec_with_band(sigmas, lmax=50, sample_fraction=0.68, label=None, color=None, spec=0, burnin=0):
+def plot_ml_powspec_with_band(sigmas, lmax=50, sample_fraction=0.68, label=None, color='red', mlcolor='blue',spec=0, burnin=0):
     if isinstance(sigmas, str):
         sigmas = pyfits.open(sigmas)[0].data
     numsamps = np.sum(sigmas[0, :, 0, 0]) - len(sigmas[0, :, 0, 0]) * burnin
@@ -499,6 +499,7 @@ def plot_ml_powspec_with_band(sigmas, lmax=50, sample_fraction=0.68, label=None,
         res[i, 1] = lower
         res[i, 2] = upper
         i += 1
-#    plt.plot(ls, res[:, 0], color=color, label=label)
     plt.plot(ls, res[:, 1], color=color, label=label)
     plt.plot(ls, res[:, 2], color=color)
+    plt.fill_between(ls, res[:, 2], res[:, 1], color=color, alpha=0.5)
+    plt.plot(ls, res[:, 0], color=mlcolor, label=label)
