@@ -584,3 +584,49 @@ def collect_statistics_from_sigma_bins(sigma, bins_start, bins_end, burnin=0, sm
         uppers.append(upper)
         lowers.append(lower)
     return means, stds, mls, uppers, lowers
+
+def corr(chain):
+    c = []
+    mean = np.mean(chain)
+    var = np.var(chain)
+    for i in range(len(chain) - 1):
+        c.append(np.mean((chain[:len(chain)-(i + 1)] - mean) * \
+                (chain[i+1:] - mean))/var)
+    return np.array(c)
+
+def calc_multipole_correlation_length_from_fits_files(file, lmax=None, spec=0, burnin=0, corrlength_thresh=0.1):
+    data = flatten_commander_chain(file, burnin)
+    if lmax is None:
+        lmax = data.shape[2] - 1 
+    corrlengths = np.empty(0)
+    for l in xrange(2, lmax + 1):
+        currcorr = np.where(corr(data[:, spec, l]) < corrlength_thresh)
+        if np.size(currcorr) == 0:
+            corrlengths = np.append(corrlengths, -1)
+        else:
+            corrlengths = np.append(corrlengths, currcorr[0])
+    return np.arange(2, lmax+1), corrlengths
+
+def calc_corr_raw(l=2, ps='cls', lmax=90, spec=1, chain=None, burnin=None):
+    if burnin is None:
+        burnin = 0
+    dat = []
+    if ps == 'cls':
+        ind = l - 2
+    elif ps == 'sigma':
+        ind = l - 1 + lmax - 2
+    else:
+        raise ValueError("ps has unknown value")
+    if chain is None:
+        chain = 1
+    filenum = 1
+    cont = True
+    filename = 'cl_c%04d_k%05d.dat' % (chain, filenum + burnin)
+    cont = os.path.exists(filename)
+    while cont:
+        temp = np.loadtxt(filename)
+        dat.append(temp[ind, spec])
+        filenum += 1
+        filename = 'cl_c%04d_k%05d.dat' % (chain, filenum + burnin)
+        cont = os.path.exists(filename)
+    return corr(dat)
