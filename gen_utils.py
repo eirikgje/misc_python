@@ -630,3 +630,14 @@ def calc_corr_raw(l=2, ps='cls', lmax=90, spec=1, chain=None, burnin=None):
         filename = 'cl_c%04d_k%05d.dat' % (chain, filenum + burnin)
         cont = os.path.exists(filename)
     return corr(dat)
+
+def get_plc_data(fname):
+    return pyfits.open(fname)[0].data
+
+def normalize_1d_probdist(x, dist, mode='area'):
+    if mode == 'area':
+        dist = dist / np.sum((dist[1:] + dist[0:-1]) * 0.5 * (x[1:] - x[0:-1])) 
+    elif mode == 'peak':
+        dist = dist / np.max(dist)
+
+    return dist
