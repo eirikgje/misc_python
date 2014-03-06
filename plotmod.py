@@ -461,7 +461,6 @@ def plot_errbars_from_sigma_sample_marginals(ls, sigmas, burnin=0, spec=0, lmax=
 #    sigmas = np.reshape(sigmas[1:], ((sigmas.shape[0] - 1) * sigmas.shape[1], 1, sigmas.shape[2], sigmas.shape[3]))
     res = np.zeros((len(ls), 3))
     i = 0
-    print sigmas.shape
     for l in ls:
         samps = nsigmas[:, spec, l]
         x = np.linspace(min(samps), max(samps), 100)
@@ -503,3 +502,8 @@ def plot_ml_powspec_with_band(sigmas, lmax=50, sample_fraction=0.68, label=None,
     plt.plot(ls, res[:, 2], color=color)
     plt.fill_between(ls, res[:, 2], res[:, 1], color=color, alpha=0.5)
     plt.plot(ls, res[:, 0], color=mlcolor, label=label)
+
+#def plot_single_marginal_cl_slice(l, x, lnL, area_fraction=0.68):
+#    ml, upper, lower, mean = calculate_ml_and_asymm_errorbars_from_slices(x, lnL, area_fraction)
+#    plt.scatter(l, ml)
+#    plt.errorbar(l, ml, upper, lower)

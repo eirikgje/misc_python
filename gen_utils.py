@@ -121,11 +121,10 @@ def run_allreal_convergence(suffix, numreal=10, burnin=0):
         currfirstchain += numchains_per_real
 
 def calculate_ml_and_asymm_errorbars_from_slices(x, lnL, area_fraction=0.68):
-    dx = x[1] - x[0]
-    lnL_norm = lnL / (np.sum(lnL) * dx)
+    lnL_norm = normalize_1d_probdist(x, lnL, mode='area')
     ml_ind = np.argmax(lnL_norm)
     ml = x[ml_ind]
-    mean = np.sum(x * lnL_norm) * dx
+    mean = np.sum((x[1:] + x[0:-1]) * 0.5 * (lnL_norm[1:] + lnL_norm[0:-1]) * 0.5) * (x[1:] - x[0:-1])
     currpoint_high = ml_ind
     currpoint_low = ml_ind
     if ml_ind == 0:
@@ -136,7 +135,8 @@ def calculate_ml_and_asymm_errorbars_from_slices(x, lnL, area_fraction=0.68):
         currpoint_high += 1
     else:
         currpoint_low -= 1
-    area = np.sum(lnL_norm[currpoint_low:currpoint_high + 1] * dx)
+    area = np.sum((lnL_norm[currpoint_low:currpoint_high] + lnL_norm[currpoint_low+1:currpoint_high+1]) * 0.5 * (x[currpoint_low+1:currpoint_high+1] - x[currpoint_low:currpoint_high]))
+#    area = np.sum(lnL_norm[currpoint_low:currpoint_high + 1] * dx)
     while area < area_fraction:
         if currpoint_high == len(x) - 1 and currpoint_low == 0:
             raise ValueError("Cannot find bounds")
@@ -149,7 +149,7 @@ def calculate_ml_and_asymm_errorbars_from_slices(x, lnL, area_fraction=0.68):
                 currpoint_high += 1
             else:
                 currpoint_low -= 1
-        area = sum(lnL_norm[currpoint_low:currpoint_high + 1] * dx)
+        area = np.sum((lnL_norm[currpoint_low:currpoint_high] + lnL_norm[currpoint_low+1:currpoint_high+1]) * 0.5 * (x[currpoint_low+1:currpoint_high+1] - x[currpoint_low:currpoint_high]))
 
     upper = x[currpoint_high]
     lower = x[currpoint_low]
@@ -641,3 +641,19 @@ def normalize_1d_probdist(x, dist, mode='area'):
         dist = dist / np.max(dist)
 
     return dist
+
+def increase_function_resolution(x, y, new_nbins):
+    old_nbins = len(x)
+    x_start = x[0]
+    x_end = x[-1]
+    xnew = np.linspace(x_start, x_end, new_nbins)
+    func = interpolate.interp1d(x, y, kind='cubic')
+    ynew = func(xnew)
+
+    return xnew, ynew
+
+def cutoff_data(x, y, cutoff_min, cutoff_max):
+    x_new = x[np.where((x > cutoff_min) & (x < cutoff_max))]
+    y_new = y[np.where((x > cutoff_min) & (x < cutoff_max))]
+
+    return x_new, y_new
